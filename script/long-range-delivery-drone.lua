@@ -1084,7 +1084,7 @@ local depot_created = function(event)
     return
   end
   local depot = Depot.new(entity)
-  game.print(depot.inventory.set_filter(1, DRONE_NAME))
+  depot.inventory.set_filter(1, DRONE_NAME)
 end
 
 local request_depot_created = function(event)

@@ -543,6 +543,7 @@ local delivery_drone_recipe =
     {"steel-plate", 5},
     {"solid-fuel", 1}
   },
+  energy_required = 10,
   result = "long-range-delivery-drone"
 }
 
