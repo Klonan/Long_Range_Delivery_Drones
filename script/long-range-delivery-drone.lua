@@ -1264,6 +1264,35 @@ local on_gui_click = function(event)
   end
 end
 
+local scan_for_unhandled_depots = function()
+  local depot_count = 0
+  local request_depot_count = 0
+  local drone_count = 0
+  for surface_index, surface in pairs (game.surfaces) do
+    for k, depot in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone-depot"}) do
+      if not script_data.depots[depot.unit_number] then
+        Depot.new(depot)
+        depot_count = depot_count + 1
+      end
+    end
+    for k, request_depot in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone-request-depot"}) do
+      if not script_data.request_depots[request_depot.unit_number] then
+        Request_depot.new(request_depot)
+        request_depot_count = request_depot_count + 1
+      end
+    end
+    for k, drone in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone"}) do
+      if not script_data.drones[drone.unit_number] then
+        drone.destroy()
+        drone_count = drone_count + 1
+      end
+    end
+  end
+  if drone_count + depot_count + request_depot_count > 0 then
+    game.print({"", "Long Range Delivery Drone: ", drone_count, " drones, ", depot_count, " depots and ", request_depot_count, " request depots were found outside script control."})
+  end
+end
+
 local lib = {}
 
 lib.events =
@@ -1276,6 +1305,7 @@ lib.events =
 
 lib.on_init = function()
   global.long_range_delivery_drone = global.long_range_delivery_drone or script_data
+  scan_for_unhandled_depots()
 end
 
 lib.on_load = function()
@@ -1294,5 +1324,6 @@ lib.on_load = function()
   end
 
 end
+
 
 return lib
