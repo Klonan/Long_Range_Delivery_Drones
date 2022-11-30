@@ -746,6 +746,8 @@ Depot.update = function(self)
     return true
   end
 
+  --game.print({"", game.tick,  " update depot ", self.entity.unit_number})
+
   --self:say("Hello")
   if not self.delivery_target.entity.valid then
     self.delivery_target = nil
@@ -1072,6 +1074,8 @@ Request_depot.update = function(self)
         -- We have loads already
       elseif needed >= (stack_size * MIN_DELIVERY_STACKS) then
         self:try_to_schedule_delivery(name, needed)
+      elseif request.count < stack_size * MIN_DELIVERY_STACKS then
+        self:try_to_schedule_delivery(name, needed)
       end
     end
   end
@@ -1239,7 +1243,7 @@ end
 local open_on_map = function(player, entity)
   if not (entity and entity.valid) then return end
   player.opened = nil
-  player.open_map(entity.position, 1/8)
+  player.zoom_to_world(entity.position, 0.5)
 end
 
 local on_gui_click = function(event)
