@@ -8,10 +8,10 @@ local depot =
   flags = {"placeable-player", "player-creation"},
   minable = {mining_time = 1, result = "long-range-delivery-drone-depot"},
   max_health = 350,
-  collision_box = {{-1.35, -1.35}, {1.35, 1.35}},
-  selection_box = {{-1.5, -1.5}, {1.5, 1.5}},
+  collision_box = {{-2.85, -2.85}, {2.85, 2.85}},
+  selection_box = {{-3, -3}, {3, 3}},
   render_not_in_network_icon = false,
-  landing_location_offset = {0,0},
+  landing_location_offset = {0, 2.5},
   scale_info_icons = true,
   use_exact_mode = true,
   inventory_type = "with_filters_and_bar",
@@ -29,6 +29,7 @@ local depot =
   fast_replaceable_group = "container",
   inventory_size = 19,
   logistic_mode = "requester",
+  scale_info_icons = false,
   open_sound = { filename = "__base__/sound/metallic-chest-open.ogg", volume=0.43 },
   close_sound = { filename = "__base__/sound/metallic-chest-close.ogg", volume = 0.43 },
   opened_duration = 10,
@@ -38,11 +39,23 @@ local depot =
     {
       {
         filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/depot.png",
-        width = 280,
-        height = 220,
+        width = 224,
+        height = 224,
         frame_count = 1,
         shift = util.by_pixel(0, -2),
-        scale = 0.5
+        scale = 1
+      },
+      {
+        filename = "__base__/graphics/entity/artillery-turret/hr-artillery-turret-base-shadow.png",
+        priority = "high",
+        line_length = 1,
+        width = 277,
+        height = 149,
+        frame_count = 1,
+        direction_count = 1,
+        shift = util.by_pixel(36, 12),
+        draw_as_shadow = true,
+        scale = 1
       }
     }
   },
@@ -72,7 +85,7 @@ local depot_item =
   icon_size = depot.icon_size, icon_mipmaps = depot.icon_mipmaps,
   flags = {},
   subgroup = "logistic-network",
-  order = "a[long-range-delivery-drone-depot]",
+  order = "k[long-range-delivery-drone-depot]-a",
   place_result = "long-range-delivery-drone-depot",
   stack_size = 10
 }
@@ -84,9 +97,11 @@ local depot_recipe =
   enabled = false,
   ingredients =
   {
-    {"steel-chest", 4},
-    {"electronic-circuit", 5}
+    {"steel-chest", 20},
+    {"electronic-circuit", 15},
+    {"iron-gear-wheel", 10}
   },
+  energy_required = 5,
   result = "long-range-delivery-drone-depot"
 }
 
@@ -176,7 +191,7 @@ local request_depot_item =
   icon_size = request_depot.icon_size, icon_mipmaps = request_depot.icon_mipmaps,
   flags = {},
   subgroup = "logistic-network",
-  order = "a[long-range-delivery-drone-request-depot]",
+  order = "k[long-range-delivery-drone-request-depot]-b",
   place_result = "long-range-delivery-drone-request-depot",
   stack_size = 10
 }
@@ -528,7 +543,8 @@ local delivery_drone_item =
   icon_size = delivery_drone.icon_size,
   flags = {},
   stack_size = 1,
-  subgroup = "transport"
+  subgroup = "logistic-network",
+  order = "k[long-range-delivery-drone]-c"
 }
 
 local delivery_drone_recipe =
