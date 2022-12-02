@@ -549,7 +549,9 @@ Depot.can_handle_request = function(self, request_depot)
     return false
   end
 
-  if (self.entity.logistic_network == request_depot.entity.logistic_network) then
+
+  local logistic_network = self.entity.logistic_network
+  if (logistic_network and logistic_network == request_depot.entity.logistic_network) then
     return false
   end
 
