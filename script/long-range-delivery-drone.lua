@@ -13,7 +13,7 @@ local DRONE_NAME = "long-range-delivery-drone"
 local MAX_DELIVERY_STACKS = 5
 local MIN_DELIVERY_STACKS = 1
 local DEPOT_ORDER_TIMEOUT = 2 * 60 * 60
-local DEPOT_ORDER_MINIMAL_TIME = 10 * 60
+local DEPOT_ORDER_MINIMAL_TIME = 60
 local script_data =
 {
   request_depots = {},
@@ -434,8 +434,7 @@ Drone.update = function(self)
     error("NO target?")
   end
   if not target.entity.valid then
-    script_data.drones[self.unit_number] = nil
-    self.entity.die()
+    self:schedule_suicide()
     return
   end
   --self:say("HI")
@@ -511,13 +510,13 @@ Depot.update_logistic_filters = function(self)
   for i = slot_index, self.entity.request_slot_count do
     self.entity.clear_request_slot(i)
   end
+
 end
 
 Depot.delivery_requested = function(self, request_depot, item_name, item_count)
   if (self.delivery_target and self.delivery_target ~= request_depot) then
     error("Trying to schedule a delivery to another target")
   end
-
   item_count = min(item_count, self:get_available_capacity(item_name))
   if item_count == 0 then
     return 0
@@ -548,7 +547,6 @@ Depot.can_handle_request = function(self, request_depot)
   if self.delivery_target and self.delivery_target ~= request_depot then
     return false
   end
-
 
   local logistic_network = self.entity.logistic_network
   if (logistic_network and logistic_network == request_depot.entity.logistic_network) then
@@ -685,7 +683,7 @@ Depot.descope_order = function(self)
   local get_item_count = inventory.get_item_count
   local target_scheduled = self.delivery_target.scheduled
   for name, count in pairs(scheduled) do
-    local has_count = get_item_count(name)
+    local has_count = min(get_item_count(name), count)
     scheduled[name] = has_count
     if scheduled[name] <= 0 then
       scheduled[name] = nil
@@ -747,6 +745,7 @@ Depot.update = function(self)
     self:cleanup()
     return true
   end
+
 
   --game.print({"", game.tick,  " update depot ", self.entity.unit_number})
 
@@ -879,7 +878,6 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
     end
   end
 
-  local scheduled = self.scheduled
 
   local closest
   for k, list in pairs(depots_to_check) do
@@ -891,12 +889,11 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
     end
   end
   if not closest then return end
-
   local scheduled_count = closest:delivery_requested(self, item_name, item_count)
   if scheduled_count == 0 then return end
 
+  local scheduled = self.scheduled
   scheduled[item_name] = (scheduled[item_name] or 0) + scheduled_count
-  closest:update()
 
 end
 
@@ -1069,15 +1066,17 @@ Request_depot.update = function(self)
       local on_the_way_count = on_the_way[name] or 0
       local stack_size = get_stack_size(name)
       local needed = request.count - (container_count + scheduled_count + on_the_way_count)
+      local max_request = stack_size * MAX_DELIVERY_STACKS
+      local min_request = stack_size * MIN_DELIVERY_STACKS
 
-      if needed >= stack_size * MAX_DELIVERY_STACKS then
-        self:try_to_schedule_delivery(name, stack_size * MAX_DELIVERY_STACKS)
-      elseif container_count >= stack_size * MAX_DELIVERY_STACKS then
-        -- We have loads already
-      elseif needed >= (stack_size * MIN_DELIVERY_STACKS) then
+      if needed >= max_request then
+        self:try_to_schedule_delivery(name, max_request)
+      elseif request.count > (1.5 * max_request) then
+        -- if the request is more than 1.5 times the max, then we will only deliver the max
+      elseif needed >= min_request then
         self:try_to_schedule_delivery(name, needed)
-      elseif request.count < stack_size * MIN_DELIVERY_STACKS then
-        self:try_to_schedule_delivery(name, needed)
+      elseif request.count < min_request then
+        self:try_to_schedule_delivery(name, math.min(needed, request.count))
       end
     end
   end
@@ -1151,23 +1150,6 @@ local update_depots = function(tick)
     --depot:say(unit_number)
     script_data.next_depot_update_index = unit_number
   end
-end
-
-local old_update_depots = function(tick)
-  local bucket_index = tick % DEPOT_UPDATE_INTERVAL
-  local bucket = script_data.depot_update_buckets[bucket_index]
-  if not bucket then return end
-
-  for unit_number, depot in pairs(bucket) do
-    if depot:update() then
-      bucket[unit_number] = nil
-    end
-  end
-
-  if not next(bucket) then
-    script_data.depots[bucket_index] = nil
-  end
-
 end
 
 local update_drones = function(tick)

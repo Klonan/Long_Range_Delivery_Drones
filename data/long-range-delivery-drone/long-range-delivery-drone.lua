@@ -220,7 +220,7 @@ local delivery_drone =
   --minable = {mining_time = 0.4, result = "car"},
   mined_sound = {filename = "__core__/sound/deconstruct-medium.ogg", volume = 0.8},
   max_health = 500,
-  corpse = "car-remnants",
+  --corpse = "car-remnants",
   dying_explosion = "car-explosion",
   alert_icon_shift = util.by_pixel(0, -13),
   energy_per_hit_point = 1000000,

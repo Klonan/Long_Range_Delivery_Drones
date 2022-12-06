@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 2022-12-06
+  Changes:
+    - Decreased minimal order time from 10 seconds to 1 second
+    - Adjusted the logic of when to dispatch orders when the request is larger than the MAX carry capacity.
+    - Fixed case where order timing out could increase the order size above the MAX carry capacity.
+    - Fix drones killed by other means leaving car remnants.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2022-12-02
   Changes:
