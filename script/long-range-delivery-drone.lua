@@ -272,19 +272,39 @@ Drone.schedule_suicide = function(self)
   self:schedule_next_update(random(1, 30))
 end
 
-Drone.make_delivery_particle = function(self)
+local particle_cache = {}
+local fallback_name = "long-range-delivery-drone-delivery-particle"
+local get_particle_name = function(item_name)
+  if particle_cache[item_name] then
+    return particle_cache[item_name]
+  end
+
+  local particle_name = fallback_name.."-"..item_name
+  if not game.particle_prototypes[particle_name] then
+    particle_cache[item_name] = fallback_name
+    return fallback_name
+  end
+
+  particle_cache[item_name] = particle_name
+  return particle_name
+
+end
+
+Drone.make_delivery_particle = function(self, item_name)
   local distance = self:get_distance_to_target()
   local position = self.entity.position
   local speed = self.entity.speed
-  local time = distance / speed
-  local delivery_height = DRONE_HEIGHT - 0.40
+  local time = 5 * ceil((distance / (speed * 0.85)) / 5)
+  local delivery_height = DRONE_HEIGHT - 0.60
   local vertical_speed = -delivery_height / time
+  local source_position = {position.x, position.y + delivery_height}
+  local target_position = self:get_delivery_position()
 
   self.entity.surface.create_particle
   {
-    name = "long-range-delivery-drone-delivery-particle",
-    position = {position.x, position.y + delivery_height},
-    movement = self:get_movement(),
+    name = get_particle_name(item_name),
+    position = source_position,
+    movement = {(target_position.x - source_position[1]) / time, (target_position.y - position.y) / time},
     height = delivery_height,
     vertical_speed = vertical_speed,
     frame_speed = 1
@@ -319,7 +339,7 @@ Drone.deliver_to_target = function(self)
       end
     end
 
-    delivery_time = self:make_delivery_particle()
+    delivery_time = self:make_delivery_particle(name)
   end
 
   if not next(self.scheduled) then
