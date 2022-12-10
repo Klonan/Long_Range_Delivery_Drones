@@ -52,8 +52,13 @@ local stack_sizes_cache = {}
 local get_stack_size = function(item_name)
   local stack_size = stack_sizes_cache[item_name]
   if not stack_size then
-    stack_size = game.item_prototypes[item_name].stack_size
-    stack_sizes_cache[item_name] = stack_size
+    local prototype = game.item_prototypes[item_name]
+    if prototype then
+      stack_size = prototype.stack_size
+      stack_sizes_cache[item_name] = stack_size
+    else
+      error("Unknown item name: " .. item_name .. ".")
+    end
   end
   return stack_size
 end
@@ -294,8 +299,8 @@ Drone.deliver_to_target = function(self)
   local delivery_time
   local source_scheduled = self.scheduled
   local name, count = next(source_scheduled)
-  count = min(count, get_stack_size(name))
   if name then
+    count = min(count, get_stack_size(name))
     local target_scheduled = self.delivery_target.scheduled
     local removed = self.inventory.remove({name = name, count = count})
     if removed > 0 then
