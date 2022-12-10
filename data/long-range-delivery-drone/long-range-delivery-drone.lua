@@ -59,8 +59,20 @@ local depot =
       }
     }
   },
-  circuit_wire_connection_point = circuit_connector_definitions["chest"].points,
-  circuit_connector_sprites = circuit_connector_definitions["chest"].sprites,
+  circuit_wire_connection_point =circuit_connector_definitions.create
+  (
+    universal_connector_template,
+    {
+      { variation = 26, main_offset = util.by_pixel(3, 64 + 5.5), shadow_offset = util.by_pixel(7.5, 64 + 7.5), show_shadow = true }
+    }
+  ).points,
+  circuit_connector_sprites = circuit_connector_definitions.create
+  (
+    universal_connector_template,
+    {
+      { variation = 26, main_offset = util.by_pixel(3, 64 + 5.5), shadow_offset = util.by_pixel(7.5, 64 + 7.5), show_shadow = true }
+    }
+  ).sprites,
   circuit_wire_max_distance = 10,
   created_effect =
   {
@@ -111,7 +123,7 @@ local request_depot =
   name = "long-range-delivery-drone-request-depot",
   localised_name = {"long-range-delivery-drone-request-depot"},
   icon = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/request-depot-icon.png",
-  icon_size = 64, icon_mipmaps = 4,
+  icon_size = 64,
   flags = {"placeable-player", "player-creation"},
   minable = {mining_time = 1, result = "long-range-delivery-drone-request-depot"},
   max_health = 350,
@@ -145,28 +157,38 @@ local request_depot =
       {
         filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/request-depot.png",
         priority = "extra-high",
-        width = 66,
-        height = 74,
+        width = 128,
+        height = 196,
         frame_count = 1,
-        x = 66 * 6,
-        shift = util.by_pixel(0, -2),
-        scale = 1
+        shift = util.by_pixel(0, -20),
+        scale = 0.5
       },
       {
-
-        filename = "__base__/graphics/entity/logistic-chest/hr-logistic-chest-shadow.png",
+        filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/request-depot-shadow.png",
         priority = "extra-high",
-        width = 112,
-        height = 46,
+        width = 173,
+        height = 76,
         repeat_count = 1,
-        shift = util.by_pixel(24, 9),
+        shift = util.by_pixel(14, 12),
         draw_as_shadow = true,
-        scale = 1,
+        scale = 0.5,
       }
     }
   },
-  circuit_wire_connection_point = circuit_connector_definitions["chest"].points,
-  circuit_connector_sprites = circuit_connector_definitions["chest"].sprites,
+  circuit_wire_connection_point =circuit_connector_definitions.create
+  (
+    universal_connector_template,
+    {
+      { variation = 26, main_offset = util.by_pixel(3, 16 + 5.5), shadow_offset = util.by_pixel(7.5, 16 + 7.5), show_shadow = true }
+    }
+  ).points,
+  circuit_connector_sprites = circuit_connector_definitions.create
+  (
+    universal_connector_template,
+    {
+      { variation = 26, main_offset = util.by_pixel(3, 16 + 5.5), shadow_offset = util.by_pixel(7.5, 16 + 7.5), show_shadow = true }
+    }
+  ).sprites,
   circuit_wire_max_distance = 10,
   created_effect =
   {

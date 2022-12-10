@@ -277,7 +277,7 @@ Drone.make_delivery_particle = function(self)
   local position = self.entity.position
   local speed = self.entity.speed
   local time = distance / speed
-  local delivery_height = DRONE_HEIGHT - 0.75
+  local delivery_height = DRONE_HEIGHT - 0.40
   local vertical_speed = -delivery_height / time
 
   self.entity.surface.create_particle
