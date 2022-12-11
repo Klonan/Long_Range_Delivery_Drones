@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
-Date: ????
+Date: 2022-12-11
   Changes:
     - Fix script error if a scheduled delivery is cancelled while the drone is delivering it.
     - New graphics for the request depot.
