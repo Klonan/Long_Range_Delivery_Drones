@@ -1100,7 +1100,7 @@ Request_depot.update = function(self)
         -- if the request is more than 1.5 times the max, then we will only deliver the max
       elseif needed >= min_request then
         self:try_to_schedule_delivery(name, needed)
-      elseif request.count < min_request then
+      elseif needed > 0 and request.count < min_request then
         self:try_to_schedule_delivery(name, math.min(needed, request.count))
       end
     end

@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 2022-12-17
+  Changes:
+    - Fix crash when requesting less than the stack size if the request depot already has enough items.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2022-12-11
   Changes:
