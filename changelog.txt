@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: 2022-12-23
+  Changes:
+    - Change color of request depot to green to better signify it acts as a logistic buffer chest.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2022-12-17
   Changes:
