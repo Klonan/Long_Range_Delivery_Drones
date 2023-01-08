@@ -1061,10 +1061,17 @@ Request_depot.update_gui = function(self, player)
   local relative_gui = get_or_make_relative_gui(player)
   local table = get_panel_table(relative_gui)
   local targeting_me = self.targeting_me or {}
-  relative_gui.visible = next(targeting_me)
+
   for unit_number, other in pairs(targeting_me) do
-    add_or_update_targeting_panel(other, table)
+    if not other.entity.valid then
+      targeting_me[unit_number] = nil
+    else
+      add_or_update_targeting_panel(other, table)
+    end
   end
+
+  relative_gui.visible = next(targeting_me)
+
   for k, child in pairs(table.children) do
     local name = child.name
     if name and not targeting_me[tonumber(name)]  then
