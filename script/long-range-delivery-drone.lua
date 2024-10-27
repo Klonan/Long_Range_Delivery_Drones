@@ -114,6 +114,8 @@ end
 
 local Drone = {}
 Drone.metatable = {__index = Drone}
+script.register_metatable("Drone", Drone.metatable)
+
 Drone.new = function(entity)
   local self =
   {
@@ -122,8 +124,8 @@ Drone.new = function(entity)
     scheduled = {},
     inventory = entity.get_inventory(defines.inventory.car_trunk),
   }
+  setmetatable(self, Drone.metatable)
   script.register_on_entity_destroyed(entity)
-  Drone.load(self)
   script_data.drones[self.unit_number] = self
   self:create_shadow()
   return self
@@ -157,10 +159,6 @@ end
 
 Drone.say = function(self, text, tint)
   entity_say(self.entity, text, tint)
-end
-
-Drone.load = function(self)
-  setmetatable(self, Drone.metatable)
 end
 
 Drone.get_minimap_icon = function(self)
@@ -418,13 +416,13 @@ Drone.update_shadow_height = function(self)
   local shadow = self.shadow
   if not shadow then return end
   local height = (logistic_curve(self.entity.speed / DRONE_MAX_SPEED)) * DRONE_HEIGHT
-  rendering.set_target(shadow, self.entity, {height, height})
+  shadow.target = {entity =  self.entity, offset = {height, height}}
 end
 
 Drone.update_shadow_orientation = function(self)
   local shadow = self.shadow
   if not shadow then return end
-  rendering.set_orientation(shadow, self.entity.orientation)
+  shadow.orientation = self.entity.orientation
 end
 
 Drone.get_state_description = function(self)
@@ -478,6 +476,8 @@ end
 
 local Depot = {}
 Depot.metatable = {__index = Depot}
+script.register_metatable("Depot", Depot.metatable)
+
 Depot.new = function(entity)
   local self =
   {
@@ -487,8 +487,8 @@ Depot.new = function(entity)
     scheduled = {},
     inventory = entity.get_inventory(defines.inventory.chest)
   }
+  setmetatable(self, Depot.metatable)
   script.register_on_entity_destroyed(entity)
-  Depot.load(self)
   add_to_depots(self, script_data.depots)
   add_to_map(self, script_data.depot_map)
   add_to_update_schedule(self)
@@ -497,10 +497,6 @@ end
 
 Depot.get_minimap_icon = function(self)
   return "entity/"..self.entity.name
-end
-
-Depot.load = function(self)
-  setmetatable(self, Depot.metatable)
 end
 
 Depot.say = function(self, text)
@@ -793,6 +789,7 @@ end
 
 local Request_depot = {}
 Request_depot.metatable = {__index = Request_depot}
+script.register_metatable("Request_depot", Request_depot.metatable)
 
 Request_depot.new = function(entity)
   local self =
@@ -805,15 +802,12 @@ Request_depot.new = function(entity)
     logistic_point = entity.get_logistic_point(),
     targeting_me = {}
   }
+  setmetatable(self, Request_depot.metatable)
+
   script.register_on_entity_destroyed(entity)
-  Request_depot.load(self)
   add_to_depots(self, script_data.request_depots)
   add_to_update_schedule(self)
   return self
-end
-
-Request_depot.load = function(self)
-  setmetatable(self, Request_depot.metatable)
 end
 
 Request_depot.say = function(self, text)
@@ -1088,28 +1082,26 @@ Request_depot.update = function(self)
   local scheduled = self.scheduled
   local on_the_way = self.logistic_point.targeted_items_deliver or {}
   local get_request_slot = self.entity.get_request_slot
+  local logistic_point = self.logistic_point
 
-  for slot_index = 1, self.entity.request_slot_count do
-    local request = get_request_slot(slot_index)
-    if request then
-      local name = request.name
-      local scheduled_count = scheduled[name] or 0
-      local container_count = contents[name] or 0
-      local on_the_way_count = on_the_way[name] or 0
-      local stack_size = get_stack_size(name)
-      local needed = request.count - (container_count + scheduled_count + on_the_way_count)
-      local max_request = stack_size * MAX_DELIVERY_STACKS
-      local min_request = stack_size * MIN_DELIVERY_STACKS
+  for k, request in pairs (logistic_point.filters) do
+    local name = request.name
+    local scheduled_count = scheduled[name] or 0
+    local container_count = contents[name] or 0
+    local on_the_way_count = on_the_way[name] or 0
+    local stack_size = get_stack_size(name)
+    local needed = request.count - (container_count + scheduled_count + on_the_way_count)
+    local max_request = stack_size * MAX_DELIVERY_STACKS
+    local min_request = stack_size * MIN_DELIVERY_STACKS
 
-      if needed >= max_request then
-        self:try_to_schedule_delivery(name, max_request)
-      elseif request.count > (1.5 * max_request) then
-        -- if the request is more than 1.5 times the max, then we will only deliver the max
-      elseif needed >= min_request then
-        self:try_to_schedule_delivery(name, needed)
-      elseif needed > 0 and request.count < min_request then
-        self:try_to_schedule_delivery(name, math.min(needed, request.count))
-      end
+    if needed >= max_request then
+      self:try_to_schedule_delivery(name, max_request)
+    elseif request.count > (1.5 * max_request) then
+      -- if the request is more than 1.5 times the max, then we will only deliver the max
+    elseif needed >= min_request then
+      self:try_to_schedule_delivery(name, needed)
+    elseif needed > 0 and request.count < min_request then
+      self:try_to_schedule_delivery(name, math.min(needed, request.count))
     end
   end
 
@@ -1284,35 +1276,6 @@ local on_gui_click = function(event)
   end
 end
 
-local scan_for_unhandled_depots = function()
-  local depot_count = 0
-  local request_depot_count = 0
-  local drone_count = 0
-  for surface_index, surface in pairs (game.surfaces) do
-    for k, depot in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone-depot"}) do
-      if not script_data.depots[depot.unit_number] then
-        Depot.new(depot)
-        depot_count = depot_count + 1
-      end
-    end
-    for k, request_depot in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone-request-depot"}) do
-      if not script_data.request_depots[request_depot.unit_number] then
-        Request_depot.new(request_depot)
-        request_depot_count = request_depot_count + 1
-      end
-    end
-    for k, drone in pairs(surface.find_entities_filtered{name = "long-range-delivery-drone"}) do
-      if not script_data.drones[drone.unit_number] then
-        drone.destroy()
-        drone_count = drone_count + 1
-      end
-    end
-  end
-  if drone_count + depot_count + request_depot_count > 0 then
-    game.print({"", "Long Range Delivery Drone: ", drone_count, " drones, ", depot_count, " depots and ", request_depot_count, " request depots were found outside script control."})
-  end
-end
-
 local lib = {}
 
 lib.events =
@@ -1324,26 +1287,11 @@ lib.events =
 }
 
 lib.on_init = function()
-  global.long_range_delivery_drone = global.long_range_delivery_drone or script_data
-  scan_for_unhandled_depots()
+  storage.long_range_delivery_drone = storage.long_range_delivery_drone or script_data
 end
 
 lib.on_load = function()
-  script_data = global.long_range_delivery_drone or script_data
-
-  for unit_number, depot in pairs(script_data.depots) do
-    Depot.load(depot)
-  end
-
-  for unit_number, request_depot in pairs(script_data.request_depots) do
-    Request_depot.load(request_depot)
-  end
-
-  for unit_number, drone in pairs(script_data.drones) do
-    Drone.load(drone)
-  end
-
+  script_data = storage.long_range_delivery_drone or script_data
 end
-
 
 return lib

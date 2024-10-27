@@ -1,0 +1,14 @@
+{
+  "factorio.versions": [
+    {
+      "name": "fetched",
+      "factorioPath": "c:\\Factorio\\bin\\fetched\\factorio.exe"
+    }
+  ],
+  "Lua.diagnostics.disable": [
+    "name-style-check",
+    "codestyle-check",
+    "undefined-global",
+    "spell-check"
+  ]
+}
