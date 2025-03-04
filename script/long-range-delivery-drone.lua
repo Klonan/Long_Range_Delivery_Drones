@@ -998,7 +998,7 @@ local add_or_update_scheduled = function(scheduled, table)
   for k, child in pairs(table.children) do
     local name = child.name
     local quality = child.tags and child.tags.quality
-    if name and quality and not (scheduled[name] or scheduled[name][quality])  then
+    if name and quality and not (scheduled[name] and scheduled[name][quality])  then
       child.destroy()
     end
   end
