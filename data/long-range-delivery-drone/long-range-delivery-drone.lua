@@ -59,14 +59,14 @@ local depot =
       }
     }
   },
-  circuit_wire_connection_point =circuit_connector_definitions.create
+  circuit_wire_connection_point = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
       { variation = 26, main_offset = util.by_pixel(3, 64 + 5.5), shadow_offset = util.by_pixel(7.5, 64 + 7.5), show_shadow = true }
     }
   ).points,
-  circuit_connector_sprites = circuit_connector_definitions.create
+  circuit_connector_sprites = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
@@ -109,12 +109,12 @@ local depot_recipe =
   enabled = false,
   ingredients =
   {
-    {"steel-chest", 20},
-    {"electronic-circuit", 15},
-    {"iron-gear-wheel", 10}
+    {type="item", name="steel-chest", amount=20},
+    {type="item", name="electronic-circuit", amount=15},
+    {type="item", name="iron-gear-wheel", amount=10}
   },
   energy_required = 5,
-  result = "long-range-delivery-drone-depot"
+  results = {{type="item", name="long-range-delivery-drone-depot", amount=1}}
 }
 
 local request_depot =
@@ -177,14 +177,14 @@ local request_depot =
       }
     }
   },
-  circuit_wire_connection_point =circuit_connector_definitions.create
+  circuit_wire_connection_point = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
       { variation = 26, main_offset = util.by_pixel(3, 16 + 5.5), shadow_offset = util.by_pixel(7.5, 16 + 7.5), show_shadow = true }
     }
   ).points,
-  circuit_connector_sprites = circuit_connector_definitions.create
+  circuit_connector_sprites = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
@@ -227,10 +227,10 @@ local request_depot_recipe =
   enabled = false,
   ingredients =
   {
-    {"steel-chest", 1},
-    {"electronic-circuit", 5}
+    {type="item", name="steel-chest", amount=1},
+    {type="item", name="electronic-circuit", amount=5}
   },
-  result = "long-range-delivery-drone-request-depot"
+  results = {{type="item", name="long-range-delivery-drone-request-depot", amount=1}}
 }
 
 local delivery_drone =
@@ -249,7 +249,7 @@ local delivery_drone =
   alert_icon_shift = util.by_pixel(0, -13),
   energy_per_hit_point = 1000000,
   collision_box = {{0, 0}, {0, 0}},
-  collision_mask = {"colliding-with-tiles-only"},
+  collision_mask = {layers={}, colliding_with_tiles_only=true},
   selection_box = {{-0.7, -1}, {0.7, 1}},
   effectivity = 1,
   braking_power = "200kW",
@@ -578,13 +578,13 @@ local delivery_drone_recipe =
   enabled = false,
   ingredients =
   {
-    {"engine-unit", 1},
-    {"iron-gear-wheel", 10},
-    {"steel-plate", 5},
-    {"solid-fuel", 1}
+    {type="item", name="engine-unit", amount=1},
+    {type="item", name="iron-gear-wheel", amount=10},
+    {type="item", name="steel-plate", amount=5},
+    {type="item", name="solid-fuel", amount=1}
   },
   energy_required = 10,
-  result = "long-range-delivery-drone"
+  results = {{type="item", name="long-range-delivery-drone", amount=1}}
 }
 
 local drone_shadow_animation =

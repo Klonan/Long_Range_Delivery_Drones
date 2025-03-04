@@ -5,8 +5,8 @@ local make_delivery_particle = function(item)
   local layers = {}
 
   local base_size = item.icon_size
-  for k, icon in pairs (item.icons or {{icon = item.icon, size = base_size}}) do
-    local icon_size = icon.icon_size or base_size
+  for k, icon in pairs (item.icons or {{icon = item.icon, icon_size = base_size}}) do
+    local icon_size = icon.icon_size or base_size or 64
     layers[k] =
     {
       filename = icon.icon,
