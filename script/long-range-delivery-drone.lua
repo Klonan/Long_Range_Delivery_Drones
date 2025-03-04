@@ -1368,4 +1368,49 @@ lib.on_load = function()
   script_data = storage.long_range_delivery_drone or script_data
 end
 
+lib.on_configuration_changed = function(changed_data)
+  local mod_changes = changed_data.mod_changes
+  local old_version_string
+  if mod_changes and mod_changes["Long_Range_Delivery_Drones"] and mod_changes["Long_Range_Delivery_Drones"]["old_version"] then
+    old_version_string = mod_changes["Long_Range_Delivery_Drones"]["old_version"]
+  else
+    return
+  end
+  local version_strings = util.split(old_version_string, ".")
+  local old_version = {}
+  for i=1, #version_strings do
+    old_version[i] = tonumber(version_strings[i])
+  end
+
+  if old_version[1] < 2 then
+    -- Pre 2.0
+    script_data =
+    {
+      request_depots = {},
+      depots = {},
+      depot_map = {},
+      depot_update_buckets = {},
+      drones = {},
+      drone_update_schedule = {},
+      gui_updates = {}
+    }
+    storage.long_range_delivery_drone = script_data
+
+    for _, surface in pairs(game.surfaces) do
+      local drones = surface.find_entities_filtered{name = DRONE_NAME}
+      for _, drone in pairs(drones) do
+        drone.destroy()
+      end
+      local depots = surface.find_entities_filtered{name = "long-range-delivery-drone-depot"}
+      for _, depot in pairs(depots) do
+        depot_created({source_entity = depot})
+      end
+      local request_depots = surface.find_entities_filtered{name = "long-range-delivery-drone-request-depot"}
+      for _, request_depot in pairs(request_depots) do
+        request_depot_created({source_entity = request_depot})
+      end
+    end
+  end
+end
+
 return lib
