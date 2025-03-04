@@ -1,3 +1,5 @@
+local item_sounds = require("__base__.prototypes.item_sounds")
+
 local depot =
 {
   type = "logistic-container",
@@ -98,6 +100,9 @@ local depot_item =
   flags = {},
   subgroup = "logistic-network",
   order = "k[long-range-delivery-drone-depot]-a",
+  inventory_move_sound = item_sounds.metal_chest_inventory_move,
+  pick_sound = item_sounds.metal_chest_inventory_pickup,
+  drop_sound = item_sounds.metal_chest_inventory_move,
   place_result = "long-range-delivery-drone-depot",
   stack_size = 10
 }
@@ -216,6 +221,9 @@ local request_depot_item =
   flags = {},
   subgroup = "logistic-network",
   order = "k[long-range-delivery-drone-request-depot]-b",
+  inventory_move_sound = item_sounds.metal_chest_inventory_move,
+  pick_sound = item_sounds.metal_chest_inventory_pickup,
+  drop_sound = item_sounds.metal_chest_inventory_move,
   place_result = "long-range-delivery-drone-request-depot",
   stack_size = 10
 }
@@ -566,9 +574,12 @@ local delivery_drone_item =
   icon = delivery_drone.icon,
   icon_size = delivery_drone.icon_size,
   flags = {},
-  stack_size = 1,
   subgroup = "logistic-network",
-  order = "k[long-range-delivery-drone]-c"
+  order = "k[long-range-delivery-drone]-c",
+  inventory_move_sound = item_sounds.robotic_inventory_move,
+  pick_sound = item_sounds.robotic_inventory_pickup,
+  drop_sound = item_sounds.robotic_inventory_move,
+  stack_size = 1
 }
 
 local delivery_drone_recipe =
