@@ -454,7 +454,7 @@ end
 Drone.get_state_description = function(self)
   local text = ""
   local distance = ceil(self:get_distance_to_target())
-  text = text .. "[color=34, 181,255][" .. distance .. "m][/color]"
+  text = text .. "[color=34,181,255][" .. distance .. "m][/color]"
   for name, quality_count in pairs(self.scheduled) do
     for quality, count in pairs(quality_count) do
       text = text .. " [item=" .. name .. ",quality=" .. quality .. "]"
@@ -939,7 +939,7 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_quality,
       return
     end
 
-    if self.entity.request_from_buffers then
+    if depot.entity.request_from_buffers then
       count = count + supply_counts["buffer"]
       if count >= request_count then
         depots_to_check[3][unit_number] = depot
