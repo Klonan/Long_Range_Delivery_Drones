@@ -52,7 +52,7 @@ local stack_sizes_cache = {}
 local get_stack_size = function(item_name)
   local stack_size = stack_sizes_cache[item_name]
   if not stack_size then
-    local prototype = game.item_prototypes[item_name]
+    local prototype = prototypes.item[item_name]
     if prototype then
       stack_size = prototype.stack_size
       stack_sizes_cache[item_name] = stack_size
@@ -125,7 +125,7 @@ Drone.new = function(entity)
     inventory = entity.get_inventory(defines.inventory.car_trunk),
   }
   setmetatable(self, Drone.metatable)
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   script_data.drones[self.unit_number] = self
   self:create_shadow()
   return self
@@ -278,7 +278,7 @@ local get_particle_name = function(item_name)
   end
 
   local particle_name = fallback_name.."-"..item_name
-  if not game.particle_prototypes[particle_name] then
+  if not prototypes.particle[particle_name] then
     particle_cache[item_name] = fallback_name
     return fallback_name
   end
@@ -485,10 +485,11 @@ Depot.new = function(entity)
     unit_number = entity.unit_number,
     position = entity.position,
     scheduled = {},
-    inventory = entity.get_inventory(defines.inventory.chest)
+    inventory = entity.get_inventory(defines.inventory.chest),
+    logistic_section = entity.get_logistic_point(defines.logistic_member_index.logistic_container).get_section(1),
   }
   setmetatable(self, Depot.metatable)
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   add_to_depots(self, script_data.depots)
   add_to_map(self, script_data.depot_map)
   add_to_update_schedule(self)
@@ -518,18 +519,18 @@ Depot.update_logistic_filters = function(self)
   local slot_index = 1
 
   if next(self.scheduled) then
-    self.entity.set_request_slot({name = DRONE_NAME, count = 1 + (self.scheduled[DRONE_NAME] or 0)}, slot_index)
+    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + (self.scheduled[DRONE_NAME] or 0)})
     slot_index = slot_index + 1
     for name, count in pairs(self.scheduled) do
       if name ~= DRONE_NAME then
-        self.entity.set_request_slot({name = name, count = count}, slot_index)
+        self.logistic_section.set_slot(slot_index, {value = name, min = count})
         slot_index = slot_index + 1
       end
     end
   end
 
-  for i = slot_index, self.entity.request_slot_count do
-    self.entity.clear_request_slot(i)
+  for i = slot_index, self.logistic_section.filters_count do
+    self.logistic_section.clear_slot(i)
   end
 
 end
@@ -639,7 +640,7 @@ Depot.send_drone = function(self)
   }
   entity.color = get_force_color(force)
 
-  force.item_production_statistics.on_flow(DRONE_NAME, -1)
+  force.get_item_production_statistics(self.entity.surface).on_flow(DRONE_NAME, -1)
 
 
   local drone = Drone.new(entity)
@@ -799,12 +800,12 @@ Request_depot.new = function(entity)
     position = entity.position,
     scheduled = {},
     inventory = entity.get_inventory(defines.inventory.chest),
-    logistic_point = entity.get_logistic_point(),
+    logistic_point = entity.get_logistic_point(defines.logistic_member_index.logistic_container),
     targeting_me = {}
   }
   setmetatable(self, Request_depot.metatable)
 
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   add_to_depots(self, script_data.request_depots)
   add_to_update_schedule(self)
   return self
@@ -1040,7 +1041,7 @@ local get_or_make_relative_gui = function(player)
   {
     type = "table",
     column_count = 2,
-    style = "trains_table"
+    style = "trains_widget_table"
   }
 
   return relative_gui
@@ -1064,7 +1065,7 @@ Request_depot.update_gui = function(self, player)
     end
   end
 
-  relative_gui.visible = next(targeting_me)
+  relative_gui.visible = next(targeting_me) and true or false
 
   for k, child in pairs(table.children) do
     local name = child.name
@@ -1081,10 +1082,9 @@ Request_depot.update = function(self)
   local contents = self.inventory.get_contents()
   local scheduled = self.scheduled
   local on_the_way = self.logistic_point.targeted_items_deliver or {}
-  local get_request_slot = self.entity.get_request_slot
   local logistic_point = self.logistic_point
 
-  for k, request in pairs (logistic_point.filters) do
+  for k, request in pairs (logistic_point.filters or {}) do
     local name = request.name
     local scheduled_count = scheduled[name] or 0
     local container_count = contents[name] or 0
@@ -1251,7 +1251,12 @@ end
 local open_on_map = function(player, entity)
   if not (entity and entity.valid) then return end
   player.opened = nil
-  player.zoom_to_world(entity.position, 0.5)
+  player.set_controller{
+    type = defines.controllers.remote,
+    position = entity.position,
+    surface = entity.surface,
+  }
+  player.centered_on = entity
 end
 
 local on_gui_click = function(event)
