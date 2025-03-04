@@ -46,7 +46,7 @@ local depot =
         scale = 1
       },
       {
-        filename = "__base__/graphics/entity/artillery-turret/hr-artillery-turret-base-shadow.png",
+        filename = "__base__/graphics/entity/artillery-turret/artillery-turret-base-shadow.png",
         priority = "high",
         line_length = 1,
         width = 277,
@@ -414,22 +414,22 @@ local delivery_drone =
         stripes =
         {
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-a.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-a.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-b.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-b.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-c.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-c.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-d.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-d.png",
             width_in_frames = 8,
             height_in_frames = 8
           }
@@ -445,22 +445,22 @@ local delivery_drone =
         stripes =
         {
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-a.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-a.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-b.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-b.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-c.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-c.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-d.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-d.png",
             width_in_frames = 8,
             height_in_frames = 8
           }
@@ -602,22 +602,22 @@ local drone_shadow_animation =
   stripes =
   {
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-a.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-a.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-b.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-b.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-c.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-c.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-d.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-d.png",
       width_in_frames = 8,
       height_in_frames = 8
     }
@@ -638,22 +638,22 @@ local animation =
       stripes =
       {
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-a.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-a.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-b.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-b.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-c.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-c.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-d.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-d.png",
           width_in_frames = 8,
           height_in_frames = 8
         }
@@ -676,22 +676,22 @@ local shadow_animation =
       stripes =
       {
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-a.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-a.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-b.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-b.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-c.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-c.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-d.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-d.png",
           width_in_frames = 8,
           height_in_frames = 8
         }
@@ -775,7 +775,7 @@ local delivery_particle =
   pictures =
   {
     {
-      filename = "__base__/graphics/entity/poison-capsule/hr-poison-capsule.png",
+      filename = "__base__/graphics/entity/poison-capsule/poison-capsule.png",
       draw_as_glow = true,
       frame_count = 16,
       line_length = 8,
@@ -789,7 +789,7 @@ local delivery_particle =
   shadows =
   {
     {
-      filename = "__base__/graphics/entity/poison-capsule/hr-poison-capsule-shadow.png",
+      filename = "__base__/graphics/entity/poison-capsule/poison-capsule-shadow.png",
       frame_count = 16,
       line_length = 8,
       animation_speed = 0.250,
