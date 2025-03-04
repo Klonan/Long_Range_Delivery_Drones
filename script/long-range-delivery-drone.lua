@@ -1362,6 +1362,7 @@ lib.events =
 
 lib.on_init = function()
   storage.long_range_delivery_drone = storage.long_range_delivery_drone or script_data
+  storage.regenerate_data_migration = true
 end
 
 lib.on_load = function()
@@ -1369,21 +1370,8 @@ lib.on_load = function()
 end
 
 lib.on_configuration_changed = function(changed_data)
-  local mod_changes = changed_data.mod_changes
-  local old_version_string
-  if mod_changes and mod_changes["Long_Range_Delivery_Drones"] and mod_changes["Long_Range_Delivery_Drones"]["old_version"] then
-    old_version_string = mod_changes["Long_Range_Delivery_Drones"]["old_version"]
-  else
-    return
-  end
-  local version_strings = util.split(old_version_string, ".")
-  local old_version = {}
-  for i=1, #version_strings do
-    old_version[i] = tonumber(version_strings[i])
-  end
-
-  if old_version[1] < 2 then
-    -- Pre 2.0
+  if not storage.regenerate_data_migration then
+    storage.regenerate_data_migration = true
     script_data =
     {
       request_depots = {},
