@@ -1073,7 +1073,6 @@ end
 
 local get_or_make_relative_gui = function(player)
 
-  local gui = player.gui.relative
   local relative_gui = player.gui.relative.request_depot_gui
   if relative_gui then return relative_gui end
 
@@ -1109,8 +1108,9 @@ local get_or_make_relative_gui = function(player)
   {
     type = "table",
     column_count = 2,
-    style = "trains_widget_table"
   }
+  table.style.horizontal_spacing = 0
+  table.style.vertical_spacing = 0
 
   return relative_gui
 
