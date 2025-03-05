@@ -536,7 +536,7 @@ Depot.get_available_capacity = function(self, item_name, item_quality)
   local stacks = MAX_DELIVERY_STACKS
   for name, quality_count in pairs(self.scheduled) do
     for quality, count in pairs(quality_count) do
-      if name ~= item_name and quality ~= item_quality then
+      if name ~= item_name or quality ~= item_quality then
         stacks = stacks - ceil(count / get_stack_size(name))
       end
     end
