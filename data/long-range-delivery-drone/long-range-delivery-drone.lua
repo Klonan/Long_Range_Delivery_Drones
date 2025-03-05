@@ -15,7 +15,10 @@ local depot =
   selection_box = {{-3, -3}, {3, 3}},
   render_not_in_network_icon = false,
   landing_location_offset = {0, 2.5},
-  scale_info_icons = true,
+  icon_draw_specification = {
+    scale = 2,
+    scale_for_many = 2
+  },
   use_exact_mode = true,
   inventory_type = "with_filters_and_bar",
   resistances =
@@ -54,7 +57,6 @@ local depot =
         width = 277,
         height = 149,
         frame_count = 1,
-        direction_count = 1,
         shift = util.by_pixel(36, 12),
         draw_as_shadow = true,
         scale = 1
@@ -604,7 +606,6 @@ local drone_shadow_animation =
   name = "long-range-delivery-drone-shadow-animation",
   size = 512,
   frame_count = 4,
-  direction_count = 64,
   animation_speed = 1,
   scale = 0.5,
   --draw_as_shadow = true,
@@ -643,7 +644,6 @@ local animation =
     {
       size = 512,
       frame_count = 255,
-      direction_count = 1,
       animation_speed = 4,
       scale = 0.5,
       stripes =
@@ -680,7 +680,6 @@ local shadow_animation =
     {
       size = 512,
       frame_count = 255,
-      direction_count = 1,
       animation_speed = 4,
       scale = 0.5,
       draw_as_shadow = true,
@@ -836,7 +835,7 @@ local technology =
       recipe = "long-range-delivery-drone-request-depot"
     }
   },
-  prerequisites = {"engine", "automation-2", "oil-processing"},
+  prerequisites = {"oil-processing"},
   unit =
   {
     count = 500,
