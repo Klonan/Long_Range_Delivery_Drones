@@ -1326,6 +1326,9 @@ local open_on_map = function(player, entity)
     surface = entity.surface,
   }
   player.centered_on = entity
+  if entity.type == "logistic-container" then
+    player.opened = entity
+  end
 end
 
 local on_gui_click = function(event)
