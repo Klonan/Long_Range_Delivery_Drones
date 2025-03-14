@@ -1,3 +1,5 @@
+local item_sounds = require("__base__.prototypes.item_sounds")
+
 local depot =
 {
   type = "logistic-container",
@@ -13,7 +15,10 @@ local depot =
   selection_box = {{-3, -3}, {3, 3}},
   render_not_in_network_icon = false,
   landing_location_offset = {0, 2.5},
-  scale_info_icons = true,
+  icon_draw_specification = {
+    scale = 2,
+    scale_for_many = 2
+  },
   use_exact_mode = true,
   inventory_type = "with_filters_and_bar",
   resistances =
@@ -46,27 +51,26 @@ local depot =
         scale = 1
       },
       {
-        filename = "__base__/graphics/entity/artillery-turret/hr-artillery-turret-base-shadow.png",
+        filename = "__base__/graphics/entity/artillery-turret/artillery-turret-base-shadow.png",
         priority = "high",
         line_length = 1,
         width = 277,
         height = 149,
         frame_count = 1,
-        direction_count = 1,
         shift = util.by_pixel(36, 12),
         draw_as_shadow = true,
         scale = 1
       }
     }
   },
-  circuit_wire_connection_point =circuit_connector_definitions.create
+  circuit_wire_connection_point = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
       { variation = 26, main_offset = util.by_pixel(3, 64 + 5.5), shadow_offset = util.by_pixel(7.5, 64 + 7.5), show_shadow = true }
     }
   ).points,
-  circuit_connector_sprites = circuit_connector_definitions.create
+  circuit_connector_sprites = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
@@ -98,6 +102,9 @@ local depot_item =
   flags = {},
   subgroup = "logistic-network",
   order = "k[long-range-delivery-drone-depot]-a",
+  inventory_move_sound = item_sounds.metal_chest_inventory_move,
+  pick_sound = item_sounds.metal_chest_inventory_pickup,
+  drop_sound = item_sounds.metal_chest_inventory_move,
   place_result = "long-range-delivery-drone-depot",
   stack_size = 10
 }
@@ -109,12 +116,12 @@ local depot_recipe =
   enabled = false,
   ingredients =
   {
-    {"steel-chest", 20},
-    {"electronic-circuit", 15},
-    {"iron-gear-wheel", 10}
+    {type="item", name="steel-chest", amount=20},
+    {type="item", name="electronic-circuit", amount=15},
+    {type="item", name="iron-gear-wheel", amount=10}
   },
   energy_required = 5,
-  result = "long-range-delivery-drone-depot"
+  results = {{type="item", name="long-range-delivery-drone-depot", amount=1}}
 }
 
 local request_depot =
@@ -177,14 +184,14 @@ local request_depot =
       }
     }
   },
-  circuit_wire_connection_point =circuit_connector_definitions.create
+  circuit_wire_connection_point = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
       { variation = 26, main_offset = util.by_pixel(3, 16 + 5.5), shadow_offset = util.by_pixel(7.5, 16 + 7.5), show_shadow = true }
     }
   ).points,
-  circuit_connector_sprites = circuit_connector_definitions.create
+  circuit_connector_sprites = circuit_connector_definitions.create_vector
   (
     universal_connector_template,
     {
@@ -216,6 +223,9 @@ local request_depot_item =
   flags = {},
   subgroup = "logistic-network",
   order = "k[long-range-delivery-drone-request-depot]-b",
+  inventory_move_sound = item_sounds.metal_chest_inventory_move,
+  pick_sound = item_sounds.metal_chest_inventory_pickup,
+  drop_sound = item_sounds.metal_chest_inventory_move,
   place_result = "long-range-delivery-drone-request-depot",
   stack_size = 10
 }
@@ -227,10 +237,10 @@ local request_depot_recipe =
   enabled = false,
   ingredients =
   {
-    {"steel-chest", 1},
-    {"electronic-circuit", 5}
+    {type="item", name="steel-chest", amount=1},
+    {type="item", name="electronic-circuit", amount=5}
   },
-  result = "long-range-delivery-drone-request-depot"
+  results = {{type="item", name="long-range-delivery-drone-request-depot", amount=1}}
 }
 
 local delivery_drone =
@@ -249,7 +259,7 @@ local delivery_drone =
   alert_icon_shift = util.by_pixel(0, -13),
   energy_per_hit_point = 1000000,
   collision_box = {{0, 0}, {0, 0}},
-  collision_mask = {"colliding-with-tiles-only"},
+  collision_mask = {layers={}, colliding_with_tiles_only=true},
   selection_box = {{-0.7, -1}, {0.7, 1}},
   effectivity = 1,
   braking_power = "200kW",
@@ -414,22 +424,22 @@ local delivery_drone =
         stripes =
         {
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-a.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-a.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-b.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-b.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-c.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-c.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-d.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-d.png",
             width_in_frames = 8,
             height_in_frames = 8
           }
@@ -445,22 +455,22 @@ local delivery_drone =
         stripes =
         {
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-a.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-a.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-b.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-b.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-c.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-c.png",
             width_in_frames = 8,
             height_in_frames = 8
           },
           {
-            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-msk-d.png",
+            filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-msk-d.png",
             width_in_frames = 8,
             height_in_frames = 8
           }
@@ -566,9 +576,12 @@ local delivery_drone_item =
   icon = delivery_drone.icon,
   icon_size = delivery_drone.icon_size,
   flags = {},
-  stack_size = 1,
   subgroup = "logistic-network",
-  order = "k[long-range-delivery-drone]-c"
+  order = "k[long-range-delivery-drone]-c",
+  inventory_move_sound = item_sounds.robotic_inventory_move,
+  pick_sound = item_sounds.robotic_inventory_pickup,
+  drop_sound = item_sounds.robotic_inventory_move,
+  stack_size = 1
 }
 
 local delivery_drone_recipe =
@@ -578,13 +591,13 @@ local delivery_drone_recipe =
   enabled = false,
   ingredients =
   {
-    {"engine-unit", 1},
-    {"iron-gear-wheel", 10},
-    {"steel-plate", 5},
-    {"solid-fuel", 1}
+    {type="item", name="engine-unit", amount=1},
+    {type="item", name="iron-gear-wheel", amount=10},
+    {type="item", name="steel-plate", amount=5},
+    {type="item", name="solid-fuel", amount=1}
   },
   energy_required = 10,
-  result = "long-range-delivery-drone"
+  results = {{type="item", name="long-range-delivery-drone", amount=1}}
 }
 
 local drone_shadow_animation =
@@ -593,7 +606,6 @@ local drone_shadow_animation =
   name = "long-range-delivery-drone-shadow-animation",
   size = 512,
   frame_count = 4,
-  direction_count = 64,
   animation_speed = 1,
   scale = 0.5,
   --draw_as_shadow = true,
@@ -602,22 +614,22 @@ local drone_shadow_animation =
   stripes =
   {
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-a.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-a.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-b.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-b.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-c.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-c.png",
       width_in_frames = 8,
       height_in_frames = 8
     },
     {
-      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-d.png",
+      filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-d.png",
       width_in_frames = 8,
       height_in_frames = 8
     }
@@ -632,28 +644,27 @@ local animation =
     {
       size = 512,
       frame_count = 255,
-      direction_count = 1,
       animation_speed = 4,
       scale = 0.5,
       stripes =
       {
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-a.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-a.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-b.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-b.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-c.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-c.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-d.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-d.png",
           width_in_frames = 8,
           height_in_frames = 8
         }
@@ -669,29 +680,28 @@ local shadow_animation =
     {
       size = 512,
       frame_count = 255,
-      direction_count = 1,
       animation_speed = 4,
       scale = 0.5,
       draw_as_shadow = true,
       stripes =
       {
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-a.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-a.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-b.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-b.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-c.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-c.png",
           width_in_frames = 8,
           height_in_frames = 8
         },
         {
-          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/hr-drone-sh-d.png",
+          filename = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-sh-d.png",
           width_in_frames = 8,
           height_in_frames = 8
         }
@@ -775,7 +785,7 @@ local delivery_particle =
   pictures =
   {
     {
-      filename = "__base__/graphics/entity/poison-capsule/hr-poison-capsule.png",
+      filename = "__base__/graphics/entity/poison-capsule/poison-capsule.png",
       draw_as_glow = true,
       frame_count = 16,
       line_length = 8,
@@ -789,7 +799,7 @@ local delivery_particle =
   shadows =
   {
     {
-      filename = "__base__/graphics/entity/poison-capsule/hr-poison-capsule-shadow.png",
+      filename = "__base__/graphics/entity/poison-capsule/poison-capsule-shadow.png",
       frame_count = 16,
       line_length = 8,
       animation_speed = 0.250,
@@ -825,7 +835,7 @@ local technology =
       recipe = "long-range-delivery-drone-request-depot"
     }
   },
-  prerequisites = {"engine", "automation-2", "oil-processing"},
+  prerequisites = {"oil-processing"},
   unit =
   {
     count = 500,

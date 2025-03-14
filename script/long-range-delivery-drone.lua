@@ -52,7 +52,7 @@ local stack_sizes_cache = {}
 local get_stack_size = function(item_name)
   local stack_size = stack_sizes_cache[item_name]
   if not stack_size then
-    local prototype = game.item_prototypes[item_name]
+    local prototype = prototypes.item[item_name]
     if prototype then
       stack_size = prototype.stack_size
       stack_sizes_cache[item_name] = stack_size
@@ -112,6 +112,17 @@ local entity_say = function(entity, text, tint)
   end
 end
 
+local get_contents_dict = function(inventory)
+  local contents_list = inventory.get_contents()
+  local contents_dict = {}
+  for _, item in pairs(contents_list) do
+    local contents_by_quality = contents_dict[item.name] or {}
+    contents_by_quality[item.quality] = item.count + (contents_by_quality[item.quality] or 0)
+    contents_dict[item.name] = contents_by_quality
+  end
+  return contents_dict
+end
+
 local Drone = {}
 Drone.metatable = {__index = Drone}
 script.register_metatable("Drone", Drone.metatable)
@@ -125,7 +136,7 @@ Drone.new = function(entity)
     inventory = entity.get_inventory(defines.inventory.car_trunk),
   }
   setmetatable(self, Drone.metatable)
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   script_data.drones[self.unit_number] = self
   self:create_shadow()
   return self
@@ -278,7 +289,7 @@ local get_particle_name = function(item_name)
   end
 
   local particle_name = fallback_name.."-"..item_name
-  if not game.particle_prototypes[particle_name] then
+  if not prototypes.particle[particle_name] then
     particle_cache[item_name] = fallback_name
     return fallback_name
   end
@@ -316,23 +327,30 @@ Drone.deliver_to_target = function(self)
 
   local delivery_time
   local source_scheduled = self.scheduled
-  local name, count = next(source_scheduled)
-  if name then
+  local name, quality_count = next(source_scheduled)
+  local quality, count = next(quality_count)
+  if name and quality and count then
     count = min(count, get_stack_size(name))
     local target_scheduled = self.delivery_target.scheduled
-    local removed = self.inventory.remove({name = name, count = count})
+    local removed = self.inventory.remove({name = name, quality = quality, count = count})
     if removed > 0 then
-      self.delivery_target.inventory.insert({name = name, count = removed})
+      self.delivery_target.inventory.insert({name = name, quality = quality, count = removed})
     end
 
-    source_scheduled[name] = source_scheduled[name] - count
-    if source_scheduled[name] <= 0 then
+    source_scheduled[name][quality] = source_scheduled[name][quality] - count
+    if source_scheduled[name][quality] <= 0 then
+      source_scheduled[name][quality] = nil
+    end
+    if not next(source_scheduled[name]) then
       source_scheduled[name] = nil
     end
 
-    if target_scheduled[name] then
-      target_scheduled[name] = target_scheduled[name] - count
-      if target_scheduled[name] <= 0 then
+    if target_scheduled[name] and target_scheduled[name][quality] then
+      target_scheduled[name][quality] = target_scheduled[name][quality] - count
+      if target_scheduled[name][quality] <= 0 then
+        target_scheduled[name][quality] = nil
+      end
+      if not next(target_scheduled[name]) then
         target_scheduled[name] = nil
       end
     end
@@ -352,11 +370,19 @@ Drone.cleanup = function(self)
   if self.delivery_target then
     local source_scheduled = self.scheduled
     local target_scheduled = self.delivery_target.scheduled
-    for name, count in pairs(source_scheduled) do
-      source_scheduled[name] = nil
-      target_scheduled[name] = (target_scheduled[name] or count) - count
-      if target_scheduled[name] <= 0 then
-        target_scheduled[name] = nil
+    for name, quality_count in pairs(source_scheduled) do
+      for quality, count in pairs(quality_count) do
+        source_scheduled[name][quality] = nil
+        if not next(source_scheduled[name]) then
+          source_scheduled[name] = nil
+        end
+        target_scheduled[name][quality] = (target_scheduled[name][quality] or count) - count
+        if target_scheduled[name][quality] <= 0 then
+          target_scheduled[name][quality] = nil
+        end
+        if not next(target_scheduled[name]) then
+          target_scheduled[name] = nil
+        end
       end
     end
   end
@@ -428,9 +454,11 @@ end
 Drone.get_state_description = function(self)
   local text = ""
   local distance = ceil(self:get_distance_to_target())
-  text = text .. "[color=34, 181,255][" .. distance .. "m][/color]"
-  for name, count in pairs(self.scheduled) do
-    text = text .. " [item=" .. name .. "]"
+  text = text .. "[color=34,181,255][" .. distance .. "m][/color]"
+  for name, quality_count in pairs(self.scheduled) do
+    for quality, count in pairs(quality_count) do
+      text = text .. " [item=" .. name .. ",quality=" .. quality .. "]"
+    end
   end
   return text
 end
@@ -485,10 +513,11 @@ Depot.new = function(entity)
     unit_number = entity.unit_number,
     position = entity.position,
     scheduled = {},
-    inventory = entity.get_inventory(defines.inventory.chest)
+    inventory = entity.get_inventory(defines.inventory.chest),
+    logistic_section = entity.get_logistic_point(defines.logistic_member_index.logistic_container).get_section(1),
   }
   setmetatable(self, Depot.metatable)
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   add_to_depots(self, script_data.depots)
   add_to_map(self, script_data.depot_map)
   add_to_update_schedule(self)
@@ -503,42 +532,49 @@ Depot.say = function(self, text)
   entity_say(self.entity, text, {r = 0, g = 1, b = 1})
 end
 
-Depot.get_available_capacity = function(self, item_name)
+Depot.get_available_capacity = function(self, item_name, item_quality)
   local stacks = MAX_DELIVERY_STACKS
-  for name, count in pairs(self.scheduled) do
-    if name ~= item_name then
-      stacks = stacks - ceil(count / get_stack_size(name))
+  for name, quality_count in pairs(self.scheduled) do
+    for quality, count in pairs(quality_count) do
+      if name ~= item_name or quality ~= item_quality then
+        stacks = stacks - ceil(count / get_stack_size(name))
+      end
     end
   end
   if not item_name then return stacks end
-  return floor(stacks * (get_stack_size(item_name)) - (self.scheduled[item_name] or 0))
+  return floor(stacks * (get_stack_size(item_name)) - (self.scheduled[item_name] and self.scheduled[item_name][item_quality] or 0))
 end
 
 Depot.update_logistic_filters = function(self)
   local slot_index = 1
 
   if next(self.scheduled) then
-    self.entity.set_request_slot({name = DRONE_NAME, count = 1 + (self.scheduled[DRONE_NAME] or 0)}, slot_index)
+    if not self.logistic_section.valid then
+      self.logistic_section = self.entity.get_logistic_point(defines.logistic_member_index.logistic_container).add_section()
+    end
+    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + (self.scheduled[DRONE_NAME] or 0)})
     slot_index = slot_index + 1
-    for name, count in pairs(self.scheduled) do
-      if name ~= DRONE_NAME then
-        self.entity.set_request_slot({name = name, count = count}, slot_index)
-        slot_index = slot_index + 1
+    for name, quality_count in pairs(self.scheduled) do
+      for quality, count in pairs(quality_count) do
+        if name ~= DRONE_NAME then
+          self.logistic_section.set_slot(slot_index, {value = {name = name, quality = quality}, min = count})
+          slot_index = slot_index + 1
+        end
       end
     end
   end
 
-  for i = slot_index, self.entity.request_slot_count do
-    self.entity.clear_request_slot(i)
+  for i = slot_index, self.logistic_section.filters_count do
+    self.logistic_section.clear_slot(i)
   end
 
 end
 
-Depot.delivery_requested = function(self, request_depot, item_name, item_count)
+Depot.delivery_requested = function(self, request_depot, item_name, item_quality, item_count)
   if (self.delivery_target and self.delivery_target ~= request_depot) then
     error("Trying to schedule a delivery to another target")
   end
-  item_count = min(item_count, self:get_available_capacity(item_name))
+  item_count = min(item_count, self:get_available_capacity(item_name, item_quality))
   if item_count == 0 then
     return 0
   end
@@ -552,7 +588,8 @@ Depot.delivery_requested = function(self, request_depot, item_name, item_count)
   self.tick_of_recieved_order = game.tick
 
   local scheduled = self.scheduled
-  scheduled[item_name] = (scheduled[item_name] or 0) + item_count
+  scheduled[item_name] = scheduled[item_name] or {}
+  scheduled[item_name][item_quality] = (scheduled[item_name][item_quality] or 0) + item_count
   self:update_logistic_filters()
 
   return item_count
@@ -574,7 +611,7 @@ Depot.can_handle_request = function(self, request_depot)
     return false
   end
 
-  local inventory_count = self:get_inventory_count(DRONE_NAME)
+  local inventory_count = self:get_inventory_count(DRONE_NAME, "normal")
   if inventory_count > 0 then
     return true
   end
@@ -586,8 +623,9 @@ Depot.can_handle_request = function(self, request_depot)
   return false
 end
 
-Depot.get_inventory_count = function(self, item_name)
-  return self.inventory.get_item_count(item_name) - (self.scheduled[item_name] or 0)
+Depot.get_inventory_count = function(self, item_name, item_quality)
+  return self.inventory.get_item_count({name=item_name, quality=item_quality})
+    - (self.scheduled[item_name] and self.scheduled[item_name][item_quality] or 0)
 end
 
 Depot.transfer_package = function(self, drone)
@@ -596,13 +634,19 @@ Depot.transfer_package = function(self, drone)
   local source_scheduled = self.scheduled
   local drone_inventory = drone.inventory
   local drone_scheduled = drone.scheduled
-  for name, count in pairs(source_scheduled) do
-    local removed = source_inventory.remove({name = name, count = count})
-    if removed > 0 then
-      drone_inventory.insert({name = name, count = removed})
+  for name, quality_count in pairs(source_scheduled) do
+    for quality, count in pairs(quality_count) do
+      local removed = source_inventory.remove({name = name, quality = quality, count = count})
+      if removed > 0 then
+        drone_inventory.insert({name = name, quality = quality, count = removed})
+      end
+      source_scheduled[name][quality] = nil
+      if not next(source_scheduled[name]) then
+        source_scheduled[name] = nil
+      end
+      drone_scheduled[name] = drone_scheduled[name] or {}
+      drone_scheduled[name][quality] = count
     end
-    source_scheduled[name] = nil
-    drone_scheduled[name] = count
   end
   self:update_logistic_filters()
 
@@ -639,7 +683,7 @@ Depot.send_drone = function(self)
   }
   entity.color = get_force_color(force)
 
-  force.item_production_statistics.on_flow(DRONE_NAME, -1)
+  force.get_item_production_statistics(self.entity.surface).on_flow(DRONE_NAME, -1)
 
 
   local drone = Drone.new(entity)
@@ -664,12 +708,20 @@ Depot.cleanup = function(self)
     self.delivery_target:remove_targeting_me(self)
     local source_scheduled = self.scheduled
     local target_scheduled = self.delivery_target.scheduled
-    for name, count in pairs(source_scheduled) do
-      target_scheduled[name] = (target_scheduled[name] or count) - count
-      if target_scheduled[name] <= 0 then
-        target_scheduled[name] = nil
+    for name, quality_count in pairs(source_scheduled) do
+      for quality, count in pairs(quality_count) do
+        target_scheduled[name][quality] = (target_scheduled[name] and target_scheduled[name][quality] or count) - count
+        if target_scheduled[name][quality] <= 0 then
+          target_scheduled[name][quality] = nil
+        end
+        if not next(target_scheduled[name]) then
+          target_scheduled[name] = nil
+        end
+        source_scheduled[name][quality] = nil
+        if not next(source_scheduled[name]) then
+          source_scheduled[name] = nil
+        end
       end
-      source_scheduled[name] = nil
     end
   end
 end
@@ -679,11 +731,13 @@ Depot.has_all_fulfilled = function(self)
   local inventory = self.inventory
   local get_item_count = inventory.get_item_count
 
-  for name, count in pairs(scheduled) do
-    local has_count = get_item_count(name)
-    if name == DRONE_NAME then has_count = has_count - 1 end
-    if has_count < count then
-      return
+  for name, quality_count in pairs(scheduled) do
+    for quality, count in pairs(quality_count) do
+      local has_count = get_item_count({name = name, quality = quality})
+      if name == DRONE_NAME then has_count = has_count - 1 end
+      if has_count < count then
+        return
+      end
     end
   end
   return true
@@ -703,15 +757,23 @@ Depot.descope_order = function(self)
   local inventory = self.inventory
   local get_item_count = inventory.get_item_count
   local target_scheduled = self.delivery_target.scheduled
-  for name, count in pairs(scheduled) do
-    local has_count = min(get_item_count(name), count)
-    scheduled[name] = has_count
-    if scheduled[name] <= 0 then
-      scheduled[name] = nil
-    end
-    target_scheduled[name] = ((target_scheduled[name] or 0) - count) + has_count
-    if target_scheduled[name] <= 0 then
-      target_scheduled[name] = nil
+  for name, quality_count in pairs(scheduled) do
+    for quality, count in pairs(quality_count) do
+      local has_count = min(get_item_count({name = name, quality = quality}), count)
+      scheduled[name][quality] = has_count
+      if scheduled[name][quality] <= 0 then
+        scheduled[name][quality] = nil
+      end
+      if not next(scheduled[name]) then
+        scheduled[name] = nil
+      end
+      target_scheduled[name][quality] = ((target_scheduled[name] and target_scheduled[name][quality] or 0) - count) + has_count
+      if target_scheduled[name][quality] <= 0 then
+        target_scheduled[name][quality] = nil
+      end
+      if not next(target_scheduled[name]) then
+        target_scheduled[name] = nil
+      end
     end
   end
 end
@@ -745,15 +807,17 @@ end
 
 Depot.get_state_description = function(self)
   local text = ""
-  for name, count in pairs(self.scheduled) do
-    text = text .. " [item=" .. name .. "]"
+  for name, quality_count in pairs(self.scheduled) do
+    for quality, count in pairs(quality_count) do
+      text = text .. " [item=" .. name .. ",quality=" .. quality .. "]"
+    end
   end
   return text
 end
 
-Depot.get_supply_counts = function(self, name)
+Depot.get_supply_counts = function(self, item_name, item_quality)
   local network = self.entity.logistic_network
-  return network and network.get_supply_counts(name)
+  return network and network.get_supply_counts({name=item_name, quality=item_quality})
 end
 
 Depot.update = function(self)
@@ -774,7 +838,7 @@ Depot.update = function(self)
   if not self.delivery_target.entity.valid then
     self.delivery_target = nil
     local scheduled = self.scheduled
-    for name, count in pairs(scheduled) do
+    for name, quality_count in pairs(scheduled) do
       scheduled[name] = nil
     end
     self:update_logistic_filters()
@@ -799,12 +863,12 @@ Request_depot.new = function(entity)
     position = entity.position,
     scheduled = {},
     inventory = entity.get_inventory(defines.inventory.chest),
-    logistic_point = entity.get_logistic_point(),
+    logistic_point = entity.get_logistic_point(defines.logistic_member_index.logistic_container),
     targeting_me = {}
   }
   setmetatable(self, Request_depot.metatable)
 
-  script.register_on_entity_destroyed(entity)
+  script.register_on_object_destroyed(entity)
   add_to_depots(self, script_data.request_depots)
   add_to_update_schedule(self)
   return self
@@ -842,7 +906,7 @@ Request_depot.get_closest = function(self, depots)
   return closest_depot
 end
 
-Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
+Request_depot.try_to_schedule_delivery = function(self, item_name, item_quality, item_count)
 
   local depots = get_depots_on_map(self.entity.surface, self.entity.force, script_data.depot_map)
   if not depots then return end
@@ -856,17 +920,17 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
   local depots_to_check = {{}, {}, {}, {}}
 
   local check_depot = function(unit_number, depot)
-    if depot:get_available_capacity(item_name) < stack_size * MIN_DELIVERY_STACKS then
+    if depot:get_available_capacity(item_name, item_quality) < stack_size * MIN_DELIVERY_STACKS then
       return
     end
 
-    local inventory_count = depot:get_inventory_count(item_name)
+    local inventory_count = depot:get_inventory_count(item_name, item_quality)
     if inventory_count >= request_count then
       depots_to_check[1][unit_number] = depot
       return
     end
 
-    local supply_counts = depot:get_supply_counts(item_name)
+    local supply_counts = depot:get_supply_counts(item_name, item_quality)
     if not supply_counts then return end
 
     local count = supply_counts["storage"] + supply_counts["passive-provider"] + supply_counts["active-provider"]
@@ -875,7 +939,7 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
       return
     end
 
-    if self.entity.request_from_buffers then
+    if depot.entity.request_from_buffers then
       count = count + supply_counts["buffer"]
       if count >= request_count then
         depots_to_check[3][unit_number] = depot
@@ -908,28 +972,33 @@ Request_depot.try_to_schedule_delivery = function(self, item_name, item_count)
     end
   end
   if not closest then return end
-  local scheduled_count = closest:delivery_requested(self, item_name, item_count)
+  local scheduled_count = closest:delivery_requested(self, item_name, item_quality, item_count)
   if scheduled_count == 0 then return end
 
   local scheduled = self.scheduled
-  scheduled[item_name] = (scheduled[item_name] or 0) + scheduled_count
+  scheduled[item_name] = scheduled[item_name] or {}
+  scheduled[item_name][item_quality] = (scheduled[item_name][item_quality] or 0) + scheduled_count
 
 end
 
 local add_or_update_scheduled = function(scheduled, table)
-  for name, count in pairs(scheduled) do
-    local button = table[name] or table.add
-    {
-      type = "sprite-button",
-      name = name,
-      sprite = "item/" .. name,
-      style = "transparent_slot"
-    }
-    button.number = count
+  for name, quality_count in pairs(scheduled) do
+    for quality, count in pairs(quality_count) do
+      local button = table[name] or table.add
+      { -- TODO add quality icon? Using choose-elem-button rather than sprite-button?
+        type = "sprite-button",
+        name = name,
+        tags = {name = name, quality = quality},
+        sprite = "item/" .. name,
+        style = "transparent_slot"
+      }
+      button.number = count
+    end
   end
   for k, child in pairs(table.children) do
     local name = child.name
-    if name and not scheduled[name]  then
+    local quality = child.tags and child.tags.quality
+    if name and quality and not (scheduled[name] and scheduled[name][quality])  then
       child.destroy()
     end
   end
@@ -1004,7 +1073,6 @@ end
 
 local get_or_make_relative_gui = function(player)
 
-  local gui = player.gui.relative
   local relative_gui = player.gui.relative.request_depot_gui
   if relative_gui then return relative_gui end
 
@@ -1040,8 +1108,9 @@ local get_or_make_relative_gui = function(player)
   {
     type = "table",
     column_count = 2,
-    style = "trains_table"
   }
+  table.style.horizontal_spacing = 0
+  table.style.vertical_spacing = 0
 
   return relative_gui
 
@@ -1064,7 +1133,7 @@ Request_depot.update_gui = function(self, player)
     end
   end
 
-  relative_gui.visible = next(targeting_me)
+  relative_gui.visible = next(targeting_me) and true or false
 
   for k, child in pairs(table.children) do
     local name = child.name
@@ -1078,30 +1147,30 @@ Request_depot.update = function(self)
   if not self.entity.valid then
     return true
   end
-  local contents = self.inventory.get_contents()
+  local contents = get_contents_dict(self.inventory)
   local scheduled = self.scheduled
   local on_the_way = self.logistic_point.targeted_items_deliver or {}
-  local get_request_slot = self.entity.get_request_slot
   local logistic_point = self.logistic_point
 
-  for k, request in pairs (logistic_point.filters) do
+  for k, request in pairs (logistic_point.filters or {}) do
     local name = request.name
-    local scheduled_count = scheduled[name] or 0
-    local container_count = contents[name] or 0
-    local on_the_way_count = on_the_way[name] or 0
+    local quality = request.quality
+    local scheduled_count = scheduled[name] and scheduled[name][quality] or 0
+    local container_count = contents[name] and contents[name][quality] or 0
+    local on_the_way_count = on_the_way[name] and on_the_way[name][quality] or 0
     local stack_size = get_stack_size(name)
     local needed = request.count - (container_count + scheduled_count + on_the_way_count)
     local max_request = stack_size * MAX_DELIVERY_STACKS
     local min_request = stack_size * MIN_DELIVERY_STACKS
 
     if needed >= max_request then
-      self:try_to_schedule_delivery(name, max_request)
+      self:try_to_schedule_delivery(name, quality, max_request)
     elseif request.count > (1.5 * max_request) then
       -- if the request is more than 1.5 times the max, then we will only deliver the max
     elseif needed >= min_request then
-      self:try_to_schedule_delivery(name, needed)
+      self:try_to_schedule_delivery(name, quality, needed)
     elseif needed > 0 and request.count < min_request then
-      self:try_to_schedule_delivery(name, math.min(needed, request.count))
+      self:try_to_schedule_delivery(name, quality, math.min(needed, request.count))
     end
   end
 
@@ -1251,7 +1320,15 @@ end
 local open_on_map = function(player, entity)
   if not (entity and entity.valid) then return end
   player.opened = nil
-  player.zoom_to_world(entity.position, 0.5)
+  player.set_controller{
+    type = defines.controllers.remote,
+    position = entity.position,
+    surface = entity.surface,
+  }
+  player.centered_on = entity
+  if entity.type == "logistic-container" then
+    player.opened = entity
+  end
 end
 
 local on_gui_click = function(event)
@@ -1288,10 +1365,43 @@ lib.events =
 
 lib.on_init = function()
   storage.long_range_delivery_drone = storage.long_range_delivery_drone or script_data
+  storage.regenerate_data_migration = true
 end
 
 lib.on_load = function()
   script_data = storage.long_range_delivery_drone or script_data
+end
+
+lib.on_configuration_changed = function(changed_data)
+  if not storage.regenerate_data_migration then
+    storage.regenerate_data_migration = true
+    script_data =
+    {
+      request_depots = {},
+      depots = {},
+      depot_map = {},
+      depot_update_buckets = {},
+      drones = {},
+      drone_update_schedule = {},
+      gui_updates = {}
+    }
+    storage.long_range_delivery_drone = script_data
+
+    for _, surface in pairs(game.surfaces) do
+      local drones = surface.find_entities_filtered{name = DRONE_NAME}
+      for _, drone in pairs(drones) do
+        drone.destroy()
+      end
+      local depots = surface.find_entities_filtered{name = "long-range-delivery-drone-depot"}
+      for _, depot in pairs(depots) do
+        depot_created({source_entity = depot})
+      end
+      local request_depots = surface.find_entities_filtered{name = "long-range-delivery-drone-request-depot"}
+      for _, request_depot in pairs(request_depots) do
+        request_depot_created({source_entity = request_depot})
+      end
+    end
+  end
 end
 
 return lib
