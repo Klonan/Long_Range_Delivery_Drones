@@ -250,7 +250,7 @@ local delivery_drone =
   localised_name = {"long-range-delivery-drone"},
   icon = "__Long_Range_Delivery_Drones__/data/long-range-delivery-drone/drone-item-icon.png",
   icon_size = 64,
-  flags = {"placeable-neutral", "player-creation", "placeable-off-grid", "not-flammable"},
+  flags = {"placeable-neutral", "player-creation", "placeable-off-grid", "not-flammable", "no-automated-item-removal", "no-automated-item-insertion"},
   --minable = {mining_time = 0.4, result = "car"},
   mined_sound = {filename = "__core__/sound/deconstruct-medium.ogg", volume = 0.8},
   max_health = 500,

@@ -1,10 +1,12 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.7
-Date: ????
+Version: 2.0.0
+Date: 2025-03-14
   Changes:
+    - Update for Factorio 2.0. (Special thanks to Xorimuth for all the work).
+    - Fix inserters taking and putting things to flying drones.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.6
-Date: ????
+Date: 2023-01-08
   Changes:
     - Fix crash when opening depot when a drone was killed mid-flight.
 ---------------------------------------------------------------------------------------------------
