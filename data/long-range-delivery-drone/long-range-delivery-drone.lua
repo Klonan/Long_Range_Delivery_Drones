@@ -262,13 +262,13 @@ local delivery_drone =
   collision_mask = {layers={}, colliding_with_tiles_only=true},
   selection_box = {{-0.7, -1}, {0.7, 1}},
   effectivity = 1,
-  braking_power = "200kW",
+  braking_force = (200 * 1000) / 60,
   energy_source =
   {
     type = "void"
   },
   consumption = "150kW",
-  friction = 0.000000001,
+  friction_force = 0.000000001,
   poop_light =
   {
     {
