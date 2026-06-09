@@ -552,11 +552,15 @@ Depot.update_logistic_filters = function(self)
     if not self.logistic_section.valid then
       self.logistic_section = self.entity.get_logistic_point(defines.logistic_member_index.logistic_container).add_section()
     end
-    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + (self.scheduled[DRONE_NAME] or 0)})
+    local drones_requested_by_player = 0
+    if self.scheduled[DRONE_NAME] and self.scheduled[DRONE_NAME]["normal"] then
+      drones_requested_by_player = self.scheduled[DRONE_NAME]["normal"]
+    end
+    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + drones_requested_by_player})
     slot_index = slot_index + 1
     for name, quality_count in pairs(self.scheduled) do
       for quality, count in pairs(quality_count) do
-        if name ~= DRONE_NAME then
+        if not (name == DRONE_NAME and quality == "normal") then
           self.logistic_section.set_slot(slot_index, {value = {name = name, quality = quality}, min = count})
           slot_index = slot_index + 1
         end
@@ -619,7 +623,7 @@ Depot.can_handle_request = function(self, request_depot)
   if self:network_can_satisfy_request(DRONE_NAME, 1, self.entity.request_from_buffers) then
     return true
   end
-
+  game.print("Cannot handle request")
   return false
 end
 
