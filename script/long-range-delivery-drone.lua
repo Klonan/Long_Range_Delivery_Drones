@@ -328,34 +328,36 @@ Drone.deliver_to_target = function(self)
   local delivery_time
   local source_scheduled = self.scheduled
   local name, quality_count = next(source_scheduled)
-  local quality, count = next(quality_count)
-  if name and quality and count then
-    count = min(count, get_stack_size(name))
-    local target_scheduled = self.delivery_target.scheduled
-    local removed = self.inventory.remove({name = name, quality = quality, count = count})
-    if removed > 0 then
-      self.delivery_target.inventory.insert({name = name, quality = quality, count = removed})
-    end
-
-    source_scheduled[name][quality] = source_scheduled[name][quality] - count
-    if source_scheduled[name][quality] <= 0 then
-      source_scheduled[name][quality] = nil
-    end
-    if not next(source_scheduled[name]) then
-      source_scheduled[name] = nil
-    end
-
-    if target_scheduled[name] and target_scheduled[name][quality] then
-      target_scheduled[name][quality] = target_scheduled[name][quality] - count
-      if target_scheduled[name][quality] <= 0 then
-        target_scheduled[name][quality] = nil
+  if quality_count then
+    local quality, count = next(quality_count)
+    if name and quality and count then
+      count = min(count, get_stack_size(name))
+      local target_scheduled = self.delivery_target.scheduled
+      local removed = self.inventory.remove({name = name, quality = quality, count = count})
+      if removed > 0 then
+        self.delivery_target.inventory.insert({name = name, quality = quality, count = removed})
       end
-      if not next(target_scheduled[name]) then
-        target_scheduled[name] = nil
-      end
-    end
 
-    delivery_time = self:make_delivery_particle(name)
+      source_scheduled[name][quality] = source_scheduled[name][quality] - count
+      if source_scheduled[name][quality] <= 0 then
+        source_scheduled[name][quality] = nil
+      end
+      if not next(source_scheduled[name]) then
+        source_scheduled[name] = nil
+      end
+
+      if target_scheduled[name] and target_scheduled[name][quality] then
+        target_scheduled[name][quality] = target_scheduled[name][quality] - count
+        if target_scheduled[name][quality] <= 0 then
+          target_scheduled[name][quality] = nil
+        end
+        if not next(target_scheduled[name]) then
+          target_scheduled[name] = nil
+        end
+      end
+
+      delivery_time = self:make_delivery_particle(name)
+    end
   end
 
   if not next(self.scheduled) then
