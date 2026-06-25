@@ -328,34 +328,36 @@ Drone.deliver_to_target = function(self)
   local delivery_time
   local source_scheduled = self.scheduled
   local name, quality_count = next(source_scheduled)
-  local quality, count = next(quality_count)
-  if name and quality and count then
-    count = min(count, get_stack_size(name))
-    local target_scheduled = self.delivery_target.scheduled
-    local removed = self.inventory.remove({name = name, quality = quality, count = count})
-    if removed > 0 then
-      self.delivery_target.inventory.insert({name = name, quality = quality, count = removed})
-    end
-
-    source_scheduled[name][quality] = source_scheduled[name][quality] - count
-    if source_scheduled[name][quality] <= 0 then
-      source_scheduled[name][quality] = nil
-    end
-    if not next(source_scheduled[name]) then
-      source_scheduled[name] = nil
-    end
-
-    if target_scheduled[name] and target_scheduled[name][quality] then
-      target_scheduled[name][quality] = target_scheduled[name][quality] - count
-      if target_scheduled[name][quality] <= 0 then
-        target_scheduled[name][quality] = nil
+  if quality_count then
+    local quality, count = next(quality_count)
+    if name and quality and count then
+      count = min(count, get_stack_size(name))
+      local target_scheduled = self.delivery_target.scheduled
+      local removed = self.inventory.remove({name = name, quality = quality, count = count})
+      if removed > 0 then
+        self.delivery_target.inventory.insert({name = name, quality = quality, count = removed})
       end
-      if not next(target_scheduled[name]) then
-        target_scheduled[name] = nil
-      end
-    end
 
-    delivery_time = self:make_delivery_particle(name)
+      source_scheduled[name][quality] = source_scheduled[name][quality] - count
+      if source_scheduled[name][quality] <= 0 then
+        source_scheduled[name][quality] = nil
+      end
+      if not next(source_scheduled[name]) then
+        source_scheduled[name] = nil
+      end
+
+      if target_scheduled[name] and target_scheduled[name][quality] then
+        target_scheduled[name][quality] = target_scheduled[name][quality] - count
+        if target_scheduled[name][quality] <= 0 then
+          target_scheduled[name][quality] = nil
+        end
+        if not next(target_scheduled[name]) then
+          target_scheduled[name] = nil
+        end
+      end
+
+      delivery_time = self:make_delivery_particle(name)
+    end
   end
 
   if not next(self.scheduled) then
@@ -552,11 +554,15 @@ Depot.update_logistic_filters = function(self)
     if not self.logistic_section.valid then
       self.logistic_section = self.entity.get_logistic_point(defines.logistic_member_index.logistic_container).add_section()
     end
-    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + (self.scheduled[DRONE_NAME] or 0)})
+    local drones_requested_by_player = 0
+    if self.scheduled[DRONE_NAME] and self.scheduled[DRONE_NAME]["normal"] then
+      drones_requested_by_player = self.scheduled[DRONE_NAME]["normal"]
+    end
+    self.logistic_section.set_slot(slot_index, {value = DRONE_NAME, min = 1 + drones_requested_by_player})
     slot_index = slot_index + 1
     for name, quality_count in pairs(self.scheduled) do
       for quality, count in pairs(quality_count) do
-        if name ~= DRONE_NAME then
+        if not (name == DRONE_NAME and quality == "normal") then
           self.logistic_section.set_slot(slot_index, {value = {name = name, quality = quality}, min = count})
           slot_index = slot_index + 1
         end
@@ -619,7 +625,7 @@ Depot.can_handle_request = function(self, request_depot)
   if self:network_can_satisfy_request(DRONE_NAME, 1, self.entity.request_from_buffers) then
     return true
   end
-
+  game.print("Cannot handle request")
   return false
 end
 
